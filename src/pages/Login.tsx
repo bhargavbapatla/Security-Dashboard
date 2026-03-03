@@ -54,7 +54,6 @@ const SocialIcon = ({ id }: { id: string }) => {
     )
   }
   if (id === 'meta') {
-    // Correct Meta infinity loop icon (sourced from Bootstrap Icons)
     return (
       <svg className="h-5 w-5" viewBox="0 0 16 16" fill="white">
         <path
@@ -87,7 +86,6 @@ export const Login: FC = () => {
     navigate('/app/dashboard', { replace: true })
   }
 
-  // Helper function to assign specific Tailwind classes based on the social button type
   const getSocialButtonStyles = (id: string) => {
     switch (id) {
       case 'apple':
@@ -95,7 +93,7 @@ export const Login: FC = () => {
       case 'google':
         return 'bg-[#FFF5F3] hover:bg-[#FFEBE6] border-0'
       case 'meta':
-        return 'bg-[#3b5998] hover:bg-[#2d4373] border-0' // Using standard Meta blue
+        return 'bg-[#3b5998] hover:bg-[#2d4373] border-0'
       default:
         return 'bg-gray-50 border-gray-200 hover:bg-gray-100'
     }
@@ -164,13 +162,14 @@ export const Login: FC = () => {
         className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2"
         style={{
           background: `
-            radial-gradient(ellipse 60% 60% at 10% 90%, rgba(12,200,168,0.30) 0%, transparent 60%),
-            radial-gradient(ellipse 55% 55% at 90% 10%, rgba(255,92,0,0.30) 0%, transparent 60%),
-            #0b0b0c
+            radial-gradient(circle at 75% 110%, rgba(255, 240, 180, 0.7) 0%, rgba(255, 70, 0, 0.8) 25%, rgba(120, 10, 0, 0.6) 45%, transparent 65%),
+            radial-gradient(circle at 15% 35%, rgba(12, 200, 168, 0.2) 0%, transparent 40%),
+            radial-gradient(circle at 95% -10%, rgba(220, 120, 0, 0.15) 0%, transparent 40%),
+            #0f1013
           `
         }}
       >
-        {/* Left panel - Hidden on mobile, flex on large screens */}
+        {/* Left panel */}
         <div className="relative hidden h-full flex-col justify-center p-12 lg:flex">
           <div className="max-w-xl space-y-8">
             <h1 className="text-4xl font-semibold leading-tight text-white lg:text-5xl">
@@ -192,21 +191,20 @@ export const Login: FC = () => {
                 ))}
               </ul>
             </div>
-            
-            {/* Updated Trustpilot Rating text sizing */}
+
             <div className="pt-4 space-y-1">
               <div className="flex items-center gap-2 text-sm font-medium text-white">
                 <span className="text-lg text-primary">★</span> Trustpilot
               </div>
               <div className="text-white">
-                <span className="text-2xl font-bold tracking-tight">Rated 4.5/5.0</span> 
+                <span className="text-2xl font-bold tracking-tight">Rated 4.5/5.0</span>
                 <span className="ml-2 text-sm font-normal text-gray-400">(100k+ reviews)</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right panel - Full width on mobile, centered on large screens */}
+        {/* Right panel */}
         <div className="flex min-h-screen w-full items-center justify-center p-4 lg:p-8">
           <Card className="w-full max-w-md border-gray-100 bg-white p-6 shadow-2xl sm:p-8">
             <div className="mb-8 text-center">
@@ -300,9 +298,7 @@ export const Login: FC = () => {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Terms & Conditions</DialogTitle>
-                            <DialogDescription>
-                              Please read our terms carefully.
-                            </DialogDescription>
+                            <DialogDescription>Please read our terms carefully.</DialogDescription>
                           </DialogHeader>
                           {termsContent}
                         </DialogContent>
@@ -317,9 +313,7 @@ export const Login: FC = () => {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Privacy Policy</DialogTitle>
-                            <DialogDescription>
-                              How we handle your data.
-                            </DialogDescription>
+                            <DialogDescription>How we handle your data.</DialogDescription>
                           </DialogHeader>
                           {privacyContent}
                         </DialogContent>
@@ -341,15 +335,25 @@ export const Login: FC = () => {
 
                   <div className="flex justify-between gap-3 pt-4">
                     {socials.map((id) => (
-                      <Button
-                        key={id}
-                        type="button"
-                        variant="outline"
-                        // Flex-1 makes them stretch evenly, and we apply the custom color function
-                        className={`h-12 flex-1 rounded-full ${getSocialButtonStyles(id)}`}
-                      >
-                        <SocialIcon id={id} />
-                      </Button>
+                      <Dialog key={id}>
+                        <DialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={`h-12 flex-1 rounded-full ${getSocialButtonStyles(id)}`}
+                          >
+                            <SocialIcon id={id} />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Development in Progress</DialogTitle>
+                            <DialogDescription>
+                              Social login is currently under development. Please use email registration in the meantime!
+                            </DialogDescription>
+                          </DialogHeader>
+                        </DialogContent>
+                      </Dialog>
                     ))}
                   </div>
                 </Form>
