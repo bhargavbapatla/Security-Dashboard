@@ -1,13 +1,13 @@
-import { type FC, useDeferredValue, useMemo, useState } from 'react'
+import { type FC, useDeferredValue, useMemo, useState, useEffect, useRef } from 'react'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+import { type DashboardContextType } from '@/layouts/DashboardLayout'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Chip } from '@/components/ui/chip'
 import { StatusChip } from '@/components/ui/status-chip'
-import { Filter, Columns3, Plus, AlertTriangle, Search, RefreshCw, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Filter, Columns3, Plus, AlertTriangle, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { type Scan, initialScans } from '@/data/scans'
 
 const metaItems = [
@@ -86,63 +86,78 @@ const severityStats = [
 ]
 
 const Dashboard: FC = () => {
+  const navigate = useNavigate()
+  const { newScanResult, setNewScanResult } = useOutletContext<DashboardContextType>()
   const [scans, setScans] = useState<Scan[]>(() => initialScans)
+  const lastProcessedScan = useRef<Scan | null>(null)
+
+  useEffect(() => {
+    if (newScanResult && newScanResult !== lastProcessedScan.current) {
+      lastProcessedScan.current = newScanResult
+
+      setScans(prev => {
+        let maxCount = 0;
+        prev.forEach(s => {
+          if (s.name.startsWith('Manual Scan')) {
+            const numStr = s.name.replace('Manual Scan', '').trim();
+            const num = numStr ? parseInt(numStr, 10) : 1;
+            if (!isNaN(num) && num > maxCount) {
+              maxCount = num;
+            }
+          }
+        })
+        const nextCount = maxCount + 1;
+        const scanToAdd = { ...newScanResult, name: `Manual Scan ${nextCount}` }
+        return [scanToAdd, ...prev]
+      })
+
+      // We clear the context state so it doesn't get added again on subsequent renders.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setNewScanResult(null)
+    }
+  }, [newScanResult, setNewScanResult, setScans])
+
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
+
+  // Filter States
+  const [showFilters, setShowFilters] = useState(false)
+  const filterRef = useRef<HTMLDivElement>(null)
+  const [filterType, setFilterType] = useState('All')
+  const [filterStatus, setFilterStatus] = useState('All')
+  const [filterProgress, setFilterProgress] = useState(0)
+
+  // Close filter popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false)
+      }
+    }
+    if (showFilters) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showFilters])
+
+  const activeFilterCount = (filterType !== 'All' ? 1 : 0) + (filterStatus !== 'All' ? 1 : 0) + (filterProgress > 0 ? 1 : 0)
+
   const filtered = useMemo(
     () =>
-      scans.filter((s) =>
-        s.name.toLowerCase().includes(deferredQuery.toLowerCase().trim())
-      ),
-    [scans, deferredQuery]
+      scans.filter((s) => {
+        const matchesQuery = s.name.toLowerCase().includes(deferredQuery.toLowerCase().trim()) || s.type.toLowerCase().includes(deferredQuery.toLowerCase().trim())
+        const matchesType = filterType === 'All' || s.type === filterType
+        const matchesStatus = filterStatus === 'All' || s.status === filterStatus
+        const matchesProgress = s.progress >= filterProgress
+        return matchesQuery && matchesType && matchesStatus && matchesProgress
+      }),
+    [scans, deferredQuery, filterType, filterStatus, filterProgress]
   )
   const totalScans = filtered.length
   const pageSize = 15
   const [page, setPage] = useState(1)
-  const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({
-    name: '',
-    type: 'Greybox',
-    status: '',
-    progress: 0,
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0,
-  })
-  const [touched, setTouched] = useState({ name: false, status: false })
   const maxPage = Math.ceil(totalScans / pageSize)
   const startIndex = (page - 1) * pageSize
   const endIndex = Math.min(startIndex + pageSize, totalScans)
   const rows = filtered.slice(startIndex, endIndex)
-  const isValid = form.name.trim() !== '' && ['scheduled', 'completed', 'failed'].includes(form.status)
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setForm((f) => ({
-      ...f,
-      [name]:
-        name === 'progress' || name === 'critical' || name === 'high' || name === 'medium' || name === 'low'
-          ? Number(value)
-          : value,
-    }))
-  }
-  const handleSave = async () => {
-    setSaving(true)
-    await new Promise((r) => setTimeout(r, 800))
-    const newScan: Scan = {
-      name: form.name,
-      type: form.type as Scan['type'],
-      status: form.status as Scan['status'],
-      progress: form.progress,
-      vulns: { critical: form.critical, high: form.high, medium: form.medium, low: form.low },
-      lastScan: 'just now',
-    }
-    setScans((s) => [newScan, ...s])
-    setSaving(false)
-    setOpen(false)
-    setForm({ name: '', type: 'Greybox', status: 'scheduled', progress: 0, critical: 0, high: 0, medium: 0, low: 0 })
-  }
 
   return (
     <div className="space-y-4">
@@ -171,9 +186,8 @@ const Dashboard: FC = () => {
         {severityStats.map((stat, i) => (
           <div
             key={stat.label}
-            className={`flex flex-1 flex-col gap-2 px-8 py-5 ${
-              i < severityStats.length - 1 ? 'border-r border-border' : ''
-            }`}
+            className={`flex flex-1 flex-col gap-2 px-8 py-5 ${i < severityStats.length - 1 ? 'border-r border-border' : ''
+              }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
@@ -202,96 +216,90 @@ const Dashboard: FC = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <Button variant="outline" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
+              <div className="relative" ref={filterRef}>
+                <Button variant="outline" className="gap-2" onClick={() => setShowFilters(!showFilters)}>
+                  <Filter className="h-4 w-4" />
+                  Filter
+                  {activeFilterCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+
+                {showFilters && (
+                  <div className="absolute left-0 top-full mt-2 w-72 rounded-xl border border-border bg-card p-4 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-sm">Filter Scans</h4>
+                      {activeFilterCount > 0 && (
+                        <button
+                          className="text-xs text-muted-foreground hover:text-foreground underline"
+                          onClick={() => { setFilterType('All'); setFilterStatus('All'); setFilterProgress(0); }}
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Type Filter */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-foreground">Scan Type</label>
+                        <select
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                          value={filterType}
+                          onChange={(e) => setFilterType(e.target.value)}
+                        >
+                          <option value="All">All Types</option>
+                          <option value="Greybox">Greybox</option>
+                          <option value="Blackbox">Blackbox</option>
+                        </select>
+                      </div>
+
+                      {/* Status Filter */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-foreground">Status</label>
+                        <select
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                          value={filterStatus}
+                          onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                          <option value="All">All Statuses</option>
+                          <option value="completed">Completed</option>
+                          <option value="scheduled">Scheduled</option>
+                          <option value="failed">Failed</option>
+                        </select>
+                      </div>
+
+                      {/* Progress Filter */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-medium text-foreground">Min Progress</label>
+                          <span className="text-xs text-muted-foreground">{filterProgress}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          className="w-full accent-primary"
+                          value={filterProgress}
+                          onChange={(e) => setFilterProgress(parseInt(e.target.value, 10))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Button variant="outline" className="gap-2">
                 <Columns3 className="h-4 w-4" />
                 Column
               </Button>
             </div>
-            <Button className="gap-2" onClick={() => setOpen(true)}>
+            <Button className="gap-2" onClick={() => navigate('/app/scans', { state: { autoStart: true, scanId: Date.now() } })}>
               <Plus className="h-4 w-4" />
               New scan
             </Button>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>New Scan</DialogTitle>
-                <DialogDescription>Enter details for the new scan</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Scan name</span>
-                    <Input
-                      name="name"
-                      value={form.name}
-                      onChange={handleInput}
-                      onBlur={() => setTouched((t) => ({ ...t, name: true }))}
-                      placeholder="Web App Servers"
-                    />
-                    {touched.name && form.name.trim() === '' && (
-                      <span className="text-xs text-red-500">Scan name is required</span>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Type</span>
-                    <select name="type" value={form.type} onChange={handleInput} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                      <option>Greybox</option>
-                      <option>Blackbox</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Status</span>
-                    <select
-                      name="status"
-                      value={form.status}
-                      onChange={handleInput}
-                      onBlur={() => setTouched((t) => ({ ...t, status: true }))}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                      <option value="">Select status</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="completed">Completed</option>
-                      <option value="failed">Failed</option>
-                    </select>
-                    {touched.status && form.status === '' && (
-                      <span className="text-xs text-red-500">Status is required</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Progress</span>
-                      <span className="text-xs text-muted-foreground">{form.progress}%</span>
-                    </div>
-                    <Slider name="progress" min={0} max={100} value={form.progress} onChange={handleInput} />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-xs text-muted-foreground">Vulnerabilities</span>
-                  <div className="grid grid-cols-4 gap-2">
-                    <Input type="number" name="critical" value={form.critical} onChange={handleInput} placeholder="Critical" />
-                    <Input type="number" name="high" value={form.high} onChange={handleInput} placeholder="High" />
-                    <Input type="number" name="medium" value={form.medium} onChange={handleInput} placeholder="Medium" />
-                    <Input type="number" name="low" value={form.low} onChange={handleInput} placeholder="Low" />
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={saving || !isValid} className="gap-2">
-                  {saving && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                  Save
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
           {/* Responsive horizontal scroll wrapper — no inner vertical scrollbar */}
           <div className="w-full overflow-x-auto">
             <Table containerClassName="min-w-[800px]">
@@ -314,7 +322,7 @@ const Dashboard: FC = () => {
                       <StatusChip status={row.status} />
                     </TableCell>
                     <TableCell>
-                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                         <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-200 dark:bg-muted">
                           <div className="h-2 bg-primary" style={{ width: `${row.progress}%` }} />
                         </div>
