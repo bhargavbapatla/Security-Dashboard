@@ -257,8 +257,21 @@ const Scans: FC = () => {
   const [isConsoleMinimized, setIsConsoleMinimized] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
 
+  const logRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+  const [leftPct, setLeftPct] = useState(60)
+
+  const { setIsScanInProgress, setNewScanResult } = useOutletContext<DashboardContextType>()
+
+  const elapsedRef = useRef(0)
+  const stepIdxRef = useRef(0)
+  const logIdxRef = useRef(0)
+
   // Reset full state when a new scanId is provided
+  // eslint-disable-next-line
   useEffect(() => {
+    /* eslint-disable */
     if (scanId) {
       setSessionData(generateSessionData())
       setProgress(0)
@@ -268,24 +281,19 @@ const Scans: FC = () => {
       setFindings([])
       setDone(false)
       setIsPaused(false)
+
+      elapsedRef.current = 0
+      stepIdxRef.current = 0
+      logIdxRef.current = 0
     }
+    /* eslint-enable */
   }, [scanId])
 
-  const logRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const dragging = useRef(false)
-  const [leftPct, setLeftPct] = useState(60)
-
-  const { setIsScanInProgress, setNewScanResult } = useOutletContext<DashboardContextType>()
 
   useEffect(() => {
     setIsScanInProgress(!done)
     return () => setIsScanInProgress(false)
   }, [done, setIsScanInProgress])
-
-  const elapsedRef = useRef(0)
-  const stepIdxRef = useRef(0)
-  const logIdxRef = useRef(0)
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
@@ -356,7 +364,7 @@ const Scans: FC = () => {
     }, 100)
 
     return () => clearInterval(tick)
-  }, [isPaused, done, setNewScanResult])
+  }, [isPaused, done, setNewScanResult, sessionData])
 
   const onMouseDown = useCallback(() => { dragging.current = true }, [])
   const onMouseMove = useCallback((e: React.MouseEvent) => {

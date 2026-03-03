@@ -52,7 +52,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
     isActive
-      ? 'bg-[#1a2e2b] text-primary dark:bg-[#1a2e2b]'
+      ? 'bg-[#e6f4f1] text-[#2a9d8f] dark:bg-[#1a2e2b] dark:text-primary'
       : 'text-muted-foreground hover:bg-accent hover:text-foreground',
   ].join(' ')
 
@@ -104,18 +104,21 @@ const Sidebar: FC<{ isScanInProgress?: boolean }> = ({ isScanInProgress }) => {
   )
 }
 
-import { type Scan } from '@/data/scans'
+import { type Scan, initialScans } from '@/data/scans'
 
 export interface DashboardContextType {
   isScanInProgress: boolean;
   setIsScanInProgress: (val: boolean) => void;
   newScanResult: Scan | null;
   setNewScanResult: (scan: Scan | null) => void;
+  scans: Scan[];
+  setScans: React.Dispatch<React.SetStateAction<Scan[]>>;
 }
 
 const DashboardLayout: FC = () => {
   const [isScanInProgress, setIsScanInProgress] = useState(false)
   const [newScanResult, setNewScanResult] = useState<Scan | null>(null)
+  const [scans, setScans] = useState<Scan[]>(() => initialScans)
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -129,7 +132,8 @@ const DashboardLayout: FC = () => {
         <main className="h-[calc(100vh-56px)] flex-1 overflow-y-auto p-4 bg-background">
           <Outlet context={{
             isScanInProgress, setIsScanInProgress,
-            newScanResult, setNewScanResult
+            newScanResult, setNewScanResult,
+            scans, setScans
           } satisfies DashboardContextType} />
         </main>
       </div>

@@ -8,7 +8,20 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Chip } from '@/components/ui/chip'
 import { StatusChip } from '@/components/ui/status-chip'
 import { Filter, Columns3, Plus, AlertTriangle, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
-import { type Scan, initialScans } from '@/data/scans'
+import { type Scan } from '@/data/scans'
+import { motion, useSpring, useTransform } from 'framer-motion'
+
+// ── Animated counter ───────────────────────────────────────────────────────
+function Counter({ value, prefix = '' }: { value: number; prefix?: string }) {
+  const spring = useSpring(0, { bounce: 0, duration: 2000 })
+  const display = useTransform(spring, (current) =>
+    prefix + Math.round(current).toLocaleString()
+  )
+  useEffect(() => {
+    spring.set(value)
+  }, [spring, value])
+  return <motion.span>{display}</motion.span>
+}
 
 const metaItems = [
   { label: 'Org', value: 'Project X' },
@@ -19,115 +32,39 @@ const metaItems = [
   { label: 'Failed Scans', value: '100' },
 ]
 
-const severityStats = [
-  {
-    label: 'Critical Severity',
-    count: 86,
-    change: '+2%',
-    direction: 'up',
-    changeLabel: 'increase than yesterday',
-    icon: (
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100">
-        <svg
-          className="h-5 w-5 text-rose-500"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-        </svg>
-      </span>
-    ),
-    changeColor: 'text-rose-500',
-  },
-  {
-    label: 'High Severity',
-    count: 16,
-    change: '+0.9%',
-    direction: 'up',
-    changeLabel: 'increase than yesterday',
-    icon: (
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100">
-        <AlertTriangle className="h-5 w-5 text-orange-500" />
-      </span>
-    ),
-    changeColor: 'text-rose-500',
-  },
-  {
-    label: 'Medium Severity',
-    count: 26,
-    change: '+0.9%',
-    direction: 'down',
-    changeLabel: 'decrease than yesterday',
-    icon: (
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100">
-        <AlertTriangle className="h-5 w-5 text-yellow-500" />
-      </span>
-    ),
-    changeColor: 'text-emerald-500',
-  },
-  {
-    label: 'Low Severity',
-    count: 16,
-    change: '+0.9%',
-    direction: 'up',
-    changeLabel: 'increase than yesterday',
-    icon: (
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
-        <Search className="h-5 w-5 text-blue-500" />
-      </span>
-    ),
-    changeColor: 'text-rose-500',
-  },
-]
-
 const Dashboard: FC = () => {
   const navigate = useNavigate()
-  const { newScanResult, setNewScanResult } = useOutletContext<DashboardContextType>()
-  const [scans, setScans] = useState<Scan[]>(() => initialScans)
+  const { newScanResult, setNewScanResult, scans, setScans } = useOutletContext<DashboardContextType>()
+
   const lastProcessedScan = useRef<Scan | null>(null)
 
   useEffect(() => {
     if (newScanResult && newScanResult !== lastProcessedScan.current) {
       lastProcessedScan.current = newScanResult
-
       setScans(prev => {
-        let maxCount = 0;
+        let maxCount = 0
         prev.forEach(s => {
           if (s.name.startsWith('Manual Scan')) {
-            const numStr = s.name.replace('Manual Scan', '').trim();
-            const num = numStr ? parseInt(numStr, 10) : 1;
-            if (!isNaN(num) && num > maxCount) {
-              maxCount = num;
-            }
+            const numStr = s.name.replace('Manual Scan', '').trim()
+            const num = numStr ? parseInt(numStr, 10) : 1
+            if (!isNaN(num) && num > maxCount) maxCount = num
           }
         })
-        const nextCount = maxCount + 1;
-        const scanToAdd = { ...newScanResult, name: `Manual Scan ${nextCount}` }
-        return [scanToAdd, ...prev]
+        const nextCount = maxCount + 1
+        return [{ ...newScanResult, name: `Manual Scan ${nextCount}` }, ...prev]
       })
-
-      // We clear the context state so it doesn't get added again on subsequent renders.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setNewScanResult(null)
     }
   }, [newScanResult, setNewScanResult, setScans])
 
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
-
-  // Filter States
   const [showFilters, setShowFilters] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
   const [filterType, setFilterType] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
   const [filterProgress, setFilterProgress] = useState(0)
 
-  // Close filter popover on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
@@ -138,19 +75,24 @@ const Dashboard: FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showFilters])
 
-  const activeFilterCount = (filterType !== 'All' ? 1 : 0) + (filterStatus !== 'All' ? 1 : 0) + (filterProgress > 0 ? 1 : 0)
+  const activeFilterCount =
+    (filterType !== 'All' ? 1 : 0) +
+    (filterStatus !== 'All' ? 1 : 0) +
+    (filterProgress > 0 ? 1 : 0)
 
   const filtered = useMemo(
-    () =>
-      scans.filter((s) => {
-        const matchesQuery = s.name.toLowerCase().includes(deferredQuery.toLowerCase().trim()) || s.type.toLowerCase().includes(deferredQuery.toLowerCase().trim())
-        const matchesType = filterType === 'All' || s.type === filterType
-        const matchesStatus = filterStatus === 'All' || s.status === filterStatus
-        const matchesProgress = s.progress >= filterProgress
-        return matchesQuery && matchesType && matchesStatus && matchesProgress
-      }),
+    () => scans.filter((s) => {
+      const matchesQuery =
+        s.name.toLowerCase().includes(deferredQuery.toLowerCase().trim()) ||
+        s.type.toLowerCase().includes(deferredQuery.toLowerCase().trim())
+      const matchesType = filterType === 'All' || s.type === filterType
+      const matchesStatus = filterStatus === 'All' || s.status === filterStatus
+      const matchesProgress = s.progress >= filterProgress
+      return matchesQuery && matchesType && matchesStatus && matchesProgress
+    }),
     [scans, deferredQuery, filterType, filterStatus, filterProgress]
   )
+
   const totalScans = filtered.length
   const pageSize = 15
   const [page, setPage] = useState(1)
@@ -158,6 +100,53 @@ const Dashboard: FC = () => {
   const startIndex = (page - 1) * pageSize
   const endIndex = Math.min(startIndex + pageSize, totalScans)
   const rows = filtered.slice(startIndex, endIndex)
+
+  const totals = useMemo(() => scans.reduce(
+    (acc, scan) => ({
+      critical: acc.critical + scan.vulns.critical,
+      high: acc.high + scan.vulns.high,
+      medium: acc.medium + scan.vulns.medium,
+      low: acc.low + scan.vulns.low,
+    }),
+    { critical: 0, high: 0, medium: 0, low: 0 }
+  ), [scans])
+
+  const dynamicSeverityStats = [
+    {
+      label: 'Critical Severity',
+      count: totals.critical,
+      change: '+2%', direction: 'up', changeLabel: 'increase than yesterday',
+      icon: (
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100">
+          <svg className="h-5 w-5 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+          </svg>
+        </span>
+      ),
+      changeColor: 'text-rose-500',
+    },
+    {
+      label: 'High Severity',
+      count: totals.high,
+      change: '+0.9%', direction: 'up', changeLabel: 'increase than yesterday',
+      icon: <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100"><AlertTriangle className="h-5 w-5 text-orange-500" /></span>,
+      changeColor: 'text-rose-500',
+    },
+    {
+      label: 'Medium Severity',
+      count: totals.medium,
+      change: '+0.9%', direction: 'down', changeLabel: 'decrease than yesterday',
+      icon: <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100"><AlertTriangle className="h-5 w-5 text-yellow-500" /></span>,
+      changeColor: 'text-emerald-500',
+    },
+    {
+      label: 'Low Severity',
+      count: totals.low,
+      change: '+0.9%', direction: 'up', changeLabel: 'increase than yesterday',
+      icon: <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100"><Search className="h-5 w-5 text-blue-500" /></span>,
+      changeColor: 'text-rose-500',
+    },
+  ]
 
   return (
     <div className="space-y-4">
@@ -181,19 +170,24 @@ const Dashboard: FC = () => {
         </div>
       </div>
 
-      {/* ── Severity Stats — single row with vertical dividers ── */}
+      {/* ── Severity Stats — animated counters ── */}
       <div className="flex items-stretch rounded-xl border border-border bg-white dark:bg-[#1A1A1A]">
-        {severityStats.map((stat, i) => (
+        {dynamicSeverityStats.map((stat, i) => (
           <div
             key={stat.label}
-            className={`flex flex-1 flex-col gap-2 px-8 py-5 ${i < severityStats.length - 1 ? 'border-r border-border' : ''
+            className={`flex flex-1 flex-col gap-2 px-8 py-5 ${i < dynamicSeverityStats.length - 1 ? 'border-r border-border' : ''
               }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
               {stat.icon}
             </div>
-            <span className="text-4xl font-bold text-foreground">{stat.count}</span>
+
+            {/* ── Animated count ── */}
+            <span className="text-4xl font-bold text-foreground">
+              <Counter value={stat.count} />
+            </span>
+
             <div className={`flex items-center gap-1 text-xs font-medium ${stat.changeColor}`}>
               <span>{stat.direction === 'up' ? '↑' : '↓'}</span>
               <span>{stat.change} {stat.changeLabel}</span>
@@ -206,8 +200,6 @@ const Dashboard: FC = () => {
       <Card className="bg-white dark:bg-[#1A1A1A]">
         <CardHeader />
         <CardContent>
-
-          {/* Search / Filter / New Scan toolbar */}
           <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-1 items-center gap-2">
               <Input
@@ -226,7 +218,6 @@ const Dashboard: FC = () => {
                     </span>
                   )}
                 </Button>
-
                 {showFilters && (
                   <div className="absolute left-0 top-full mt-2 w-72 rounded-xl border border-border bg-card p-4 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex items-center justify-between mb-4">
@@ -234,15 +225,13 @@ const Dashboard: FC = () => {
                       {activeFilterCount > 0 && (
                         <button
                           className="text-xs text-muted-foreground hover:text-foreground underline"
-                          onClick={() => { setFilterType('All'); setFilterStatus('All'); setFilterProgress(0); }}
+                          onClick={() => { setFilterType('All'); setFilterStatus('All'); setFilterProgress(0) }}
                         >
                           Clear all
                         </button>
                       )}
                     </div>
-
                     <div className="space-y-4">
-                      {/* Type Filter */}
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-foreground">Scan Type</label>
                         <select
@@ -255,8 +244,6 @@ const Dashboard: FC = () => {
                           <option value="Blackbox">Blackbox</option>
                         </select>
                       </div>
-
-                      {/* Status Filter */}
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-foreground">Status</label>
                         <select
@@ -270,17 +257,13 @@ const Dashboard: FC = () => {
                           <option value="failed">Failed</option>
                         </select>
                       </div>
-
-                      {/* Progress Filter */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-medium text-foreground">Min Progress</label>
                           <span className="text-xs text-muted-foreground">{filterProgress}%</span>
                         </div>
                         <input
-                          type="range"
-                          min="0"
-                          max="100"
+                          type="range" min="0" max="100"
                           className="w-full accent-primary"
                           value={filterProgress}
                           onChange={(e) => setFilterProgress(parseInt(e.target.value, 10))}
@@ -300,7 +283,7 @@ const Dashboard: FC = () => {
               New scan
             </Button>
           </div>
-          {/* Responsive horizontal scroll wrapper — no inner vertical scrollbar */}
+
           <div className="w-full overflow-x-auto">
             <Table containerClassName="min-w-[800px]">
               <TableHeader className="sticky top-0 z-10 bg-white dark:bg-[#1A1A1A]">
@@ -318,9 +301,7 @@ const Dashboard: FC = () => {
                   <TableRow key={startIndex + i}>
                     <TableCell className="font-medium">{row.name}</TableCell>
                     <TableCell>{row.type}</TableCell>
-                    <TableCell>
-                      <StatusChip status={row.status} />
-                    </TableCell>
+                    <TableCell><StatusChip status={row.status} /></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-200 dark:bg-muted">
@@ -330,10 +311,10 @@ const Dashboard: FC = () => {
                       </div>
                     </TableCell>
                     <TableCell className="space-x-1">
-                      <Chip variant="red">{row.vulns.critical}</Chip>
-                      <Chip variant="yellow">{row.vulns.high}</Chip>
-                      <Chip variant="orange">{row.vulns.medium}</Chip>
-                      <Chip variant="green">{row.vulns.low}</Chip>
+                      {row.vulns.critical > 0 && <Chip variant="red">{row.vulns.critical}</Chip>}
+                      {row.vulns.high > 0 && <Chip variant="yellow">{row.vulns.high}</Chip>}
+                      {row.vulns.medium > 0 && <Chip variant="orange">{row.vulns.medium}</Chip>}
+                      {row.vulns.low > 0 && <Chip variant="green">{row.vulns.low}</Chip>}
                     </TableCell>
                     <TableCell className="text-right text-sm text-muted-foreground">{row.lastScan}</TableCell>
                   </TableRow>
@@ -342,33 +323,19 @@ const Dashboard: FC = () => {
             </Table>
           </div>
 
-          {/* Pagination footer */}
           <div className="mt-2 flex items-center justify-between rounded-b-md border border-t-0 px-4 py-3 text-sm text-muted-foreground">
-            <span>
-              Showing {endIndex} of {totalScans} Scans
-            </span>
+            <span>Showing {endIndex} of {totalScans} Scans</span>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={page === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="h-8 w-8"
-              >
+              <Button variant="outline" size="icon" disabled={page === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))} className="h-8 w-8">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={page === maxPage}
-                onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
-                className="h-8 w-8"
-              >
+              <Button variant="outline" size="icon" disabled={page === maxPage}
+                onClick={() => setPage((p) => Math.min(maxPage, p + 1))} className="h-8 w-8">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
-
         </CardContent>
       </Card>
     </div>
