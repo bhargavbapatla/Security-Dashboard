@@ -1,13 +1,13 @@
 import { type FC } from 'react'
-import Login from './pages/Login'
 import { ThemeProvider } from './components/theme-provider'
 import { Toaster } from './components/ui/sonner'
+import AppRouter from './routes/AppRouter'
 
 const App: FC = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Toaster />
-      <Login />
+      <AppRouter />
     </ThemeProvider>
   )
 }
