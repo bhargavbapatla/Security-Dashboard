@@ -3,6 +3,7 @@ import { useOutletContext, useLocation } from 'react-router-dom'
 import { type DashboardContextType } from '@/layouts/DashboardLayout'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, X, RotateCcw, FileOutput, Play } from 'lucide-react'
+import { toast } from 'sonner'
 
 type Severity = 'Critical' | 'High' | 'Medium' | 'Low'
 
@@ -388,7 +389,7 @@ const Scans: FC = () => {
           <span className="font-medium text-primary">New Scan</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2 text-sm">
+          <Button variant="outline" className="gap-2 text-sm" onClick={() => toast('Development In Progress')}>
             <FileOutput className="h-4 w-4" />Export Report
           </Button>
           <Button
