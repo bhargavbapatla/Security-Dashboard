@@ -8,6 +8,14 @@ import { Checkbox } from '../components/ui/checkbox'
 import { Button } from '../components/ui/button'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog'
 
 type LoginValues = {
   firstName: string
@@ -29,13 +37,15 @@ const SocialIcon = ({ id }: { id: string }) => {
   if (id === 'apple') {
     return (
       <svg className="h-5 w-5" viewBox="0 0 24 24">
-        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.74 1.18 0 2.21-1.23 3.91-1.12 1.57.11 2.77.63 3.55 1.74-2.89 1.72-2.38 5.76.68 7.05-.59 1.51-1.53 3.02-3.22 4.56zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.16 2.29-2.04 4.14-3.74 4.25z" fill="black" />
+        {/* Updated fill to white for the black button background */}
+        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.74 1.18 0 2.21-1.23 3.91-1.12 1.57.11 2.77.63 3.55 1.74-2.89 1.72-2.38 5.76.68 7.05-.59 1.51-1.53 3.02-3.22 4.56zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.16 2.29-2.04 4.14-3.74 4.25z" fill="white" />
       </svg>
     )
   }
   if (id === 'google') {
     return (
       <svg className="h-5 w-5" viewBox="0 0 24 24">
+        {/* Google remains multi-color */}
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -45,8 +55,9 @@ const SocialIcon = ({ id }: { id: string }) => {
   }
   if (id === 'meta') {
     return (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12.001 2C6.478 2 2 6.478 2 12c0 5.522 4.478 10 10.001 10 5.523 0 10-4.478 10-10 0-5.522-4.477-10-10-10zm-1.89 13.913c-2.384 0-4.05-1.503-4.05-3.87 0-2.348 1.638-3.9 3.97-3.9 1.258 0 2.222.454 2.872 1.22l.178.21.173-.213c.654-.805 1.628-1.217 2.892-1.217 2.308 0 3.945 1.543 3.945 3.9 0 2.37-1.666 3.87-4.05 3.87-1.282 0-2.274-.42-2.935-1.246l-.025-.03-.025.03c-.66.826-1.653 1.246-2.95 1.246zm3.328-3.69c-.11-.144-.19-.208-.433-.208-.756 0-1.267.75-1.267 1.87 0 1.142.51 1.892 1.267 1.892.242 0 .323-.064.433-.208l1.433-1.773-1.433-1.773zm2.56 1.892c.756 0 1.266-.75 1.266-1.892 0-1.12-.51-1.87-1.266-1.87-.243 0-.324.064-.434.208l-1.433 1.773 1.433 1.773.433.208z" fill="#0064e0"/>
+      <svg className="h-5 w-5" viewBox="0 0 24 24">
+        {/* Updated fill to white for the blue button background */}
+        <path d="M12 24c-5.018 0-8.892-2.186-10.743-4.536C-.297 17.472-.348 15.019.866 12.86c.64-.112 1.378-.202 2.21-.264-1.077 1.464-1.05 3.321.143 4.83 1.34 1.698 4.295 3.528 8.781 3.528 4.486 0 7.441-1.83 8.782-3.528 1.192-1.509 1.219-3.366.143-4.83.832.062 1.57.152 2.209.264 1.214 2.159 1.163 4.612-.393 6.604C20.892 21.814 17.018 24 12 24zm0-3.046c-3.66 0-6.183-1.405-7.391-2.934-.69-.874-.84-1.874-.46-2.738.38-.865 1.196-1.54 2.45-1.928 2.65-.821 7.152-.821 9.802 0 1.253.388 2.07 1.063 2.45 1.928.38.864.23 1.864-.46 2.738-1.208 1.529-3.731 2.934-7.391 2.934z" fill="white" />
       </svg>
     )
   }
@@ -71,6 +82,70 @@ export const Login: FC = () => {
     toast.success('Account created successfully')
   }
 
+  // Helper function to assign specific Tailwind classes based on the social button type
+  const getSocialButtonStyles = (id: string) => {
+    switch (id) {
+      case 'apple':
+        return 'bg-black hover:bg-gray-900 border-0'
+      case 'google':
+        return 'bg-[#FFF5F3] hover:bg-[#FFEBE6] border-0'
+      case 'meta':
+        return 'bg-[#3b5998] hover:bg-[#2d4373] border-0' // Using standard Meta blue
+      default:
+        return 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+    }
+  }
+
+  const termsContent = (
+    <div className="space-y-4 text-sm text-gray-600">
+      <p>
+        <strong>1. Introduction</strong>
+        <br />
+        Welcome to Aps. By accessing our platform, you agree to these terms.
+      </p>
+      <p>
+        <strong>2. User Accounts</strong>
+        <br />
+        You are responsible for maintaining the security of your account credentials.
+      </p>
+      <p>
+        <strong>3. Acceptable Use</strong>
+        <br />
+        You agree not to misuse our services or violate any applicable laws.
+      </p>
+      <p>
+        <strong>4. Termination</strong>
+        <br />
+        We reserve the right to terminate accounts that violate our terms.
+      </p>
+    </div>
+  )
+
+  const privacyContent = (
+    <div className="space-y-4 text-sm text-gray-600">
+      <p>
+        <strong>1. Data Collection</strong>
+        <br />
+        We collect information you provide directly to us, such as when you create an account.
+      </p>
+      <p>
+        <strong>2. Use of Information</strong>
+        <br />
+        We use your information to provide, maintain, and improve our services.
+      </p>
+      <p>
+        <strong>3. Data Sharing</strong>
+        <br />
+        We do not share your personal information with third parties except as described in this policy.
+      </p>
+      <p>
+        <strong>4. Security</strong>
+        <br />
+        We take reasonable measures to help protect information about you from loss, theft, misuse and unauthorized access.
+      </p>
+    </div>
+  )
+
   return (
     <>
       {/* Logo fixed top-left over entire page */}
@@ -81,7 +156,7 @@ export const Login: FC = () => {
 
       {/* Full-page gradient background */}
       <div
-        className="grid min-h-screen grid-cols-1 lg:grid-cols-2"
+        className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2"
         style={{
           background: `
             radial-gradient(ellipse 60% 60% at 10% 90%, rgba(12,200,168,0.30) 0%, transparent 60%),
@@ -90,24 +165,24 @@ export const Login: FC = () => {
           `
         }}
       >
-        {/* Left panel */}
-        <div className="relative hidden items-center justify-start p-12 lg:flex">
-          <div className="max-w-xl space-y-6">
-            <h1 className="text-5xl font-semibold leading-tight text-white">
+        {/* Left panel - Hidden on mobile, flex on large screens */}
+        <div className="relative hidden h-full flex-col justify-center p-12 lg:flex">
+          <div className="max-w-xl space-y-8">
+            <h1 className="text-4xl font-semibold leading-tight text-white lg:text-5xl">
               Expert level Cybersecurity
               <br /> in <span className="text-primary">hours</span> not weeks.
             </h1>
             <div>
-              <p className="mb-3 text-sm font-medium text-gray-300">What's included</p>
-              <ul className="space-y-2">
+              <p className="mb-4 text-sm font-medium text-gray-300">What's included</p>
+              <ul className="space-y-4">
                 {[
                   'Effortlessly spider and map targets to uncover hidden security flaws',
                   'Deliver high‑quality, validated findings in hours, not weeks.',
                   'Generate professional, enterprise‑grade security reports automatically.',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-gray-300">
-                    <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary">✓</span>
-                    <span className="text-sm">{item}</span>
+                    <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">✓</span>
+                    <span className="text-sm leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -115,21 +190,20 @@ export const Login: FC = () => {
             
             {/* Updated Trustpilot Rating text sizing */}
             <div className="pt-4 space-y-1">
-              <div className="text-sm font-medium text-white flex items-center gap-2">
-                <span className="text-primary text-lg">★</span> Trustpilot
+              <div className="flex items-center gap-2 text-sm font-medium text-white">
+                <span className="text-lg text-primary">★</span> Trustpilot
               </div>
               <div className="text-white">
                 <span className="text-2xl font-bold tracking-tight">Rated 4.5/5.0</span> 
-                <span className="text-gray-400 font-normal text-sm ml-2">(100k+ reviews)</span>
+                <span className="ml-2 text-sm font-normal text-gray-400">(100k+ reviews)</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right panel */}
-        <div className="flex items-center justify-center p-6">
-          {/* Removed dark mode classes from Card to keep it purely white */}
-          <Card className="w-full max-w-md bg-white p-8 text-gray-900 shadow-2xl border-gray-100">
+        {/* Right panel - Full width on mobile, centered on large screens */}
+        <div className="flex min-h-screen w-full items-center justify-center p-4 lg:p-8">
+          <Card className="w-full max-w-md border-gray-100 bg-white p-6 shadow-2xl sm:p-8">
             <div className="mb-8 text-center">
               <h1 className="text-3xl font-semibold text-gray-900">Sign up</h1>
               <p className="mt-2 text-sm text-gray-500">
@@ -212,9 +286,39 @@ export const Login: FC = () => {
                     />
                     <label htmlFor="agree" className="text-xs leading-relaxed text-gray-500">
                       I agree to Aps's{' '}
-                      <a href="#" className="text-primary hover:underline">Terms & Conditions</a>{' '}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button type="button" className="text-blue-600 hover:underline">
+                            Terms & Conditions
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Terms & Conditions</DialogTitle>
+                            <DialogDescription>
+                              Please read our terms carefully.
+                            </DialogDescription>
+                          </DialogHeader>
+                          {termsContent}
+                        </DialogContent>
+                      </Dialog>{' '}
                       and acknowledge the{' '}
-                      <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button type="button" className="text-blue-600 hover:underline">
+                            Privacy Policy
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Privacy Policy</DialogTitle>
+                            <DialogDescription>
+                              How we handle your data.
+                            </DialogDescription>
+                          </DialogHeader>
+                          {privacyContent}
+                        </DialogContent>
+                      </Dialog>
                     </label>
                   </div>
                   <ErrorMessage name="agree" component="div" className="text-xs text-red-500" />
@@ -227,13 +331,14 @@ export const Login: FC = () => {
                     Create account
                   </Button>
 
-                  <div className="flex justify-center gap-4 pt-4">
+                  <div className="flex justify-between gap-3 pt-4">
                     {socials.map((id) => (
                       <Button
                         key={id}
                         type="button"
                         variant="outline"
-                        className="h-12 w-20 rounded-full border-gray-200 bg-gray-50 hover:bg-gray-100"
+                        // Flex-1 makes them stretch evenly, and we apply the custom color function
+                        className={`h-12 flex-1 rounded-full ${getSocialButtonStyles(id)}`}
                       >
                         <SocialIcon id={id} />
                       </Button>
