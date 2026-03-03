@@ -154,7 +154,7 @@ export const Login: FC = () => {
   return (
     <>
       {/* Logo fixed top-left over entire page */}
-      <div className="fixed left-6 top-5 z-50 flex items-center gap-2">
+      <div className="fixed right-6 top-5 z-50 flex items-center gap-2">
         <span className="h-3 w-3 rounded-full bg-primary" />
         <span className="text-sm font-semibold tracking-wide text-white">aps</span>
       </div>
