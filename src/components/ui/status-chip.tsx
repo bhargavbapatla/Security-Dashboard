@@ -1,6 +1,6 @@
 import * as React from "react"
 
-type Status = "completed" | "scheduled" | "failed"
+type Status = "completed" | "scheduled" | "failed" | "in-progress"
 
 interface StatusChipProps {
   status: Status
@@ -17,10 +17,12 @@ const StatusChip: React.FC<StatusChipProps> = ({ status, size = "sm", shape = "s
     status === "completed"
       ? "bg-green-100 text-green-600 border border-green-200"
       : status === "scheduled"
-      ? "bg-gray-100 text-gray-600 border border-gray-200"
-      : "bg-red-100 text-red-600 border border-red-200"
+        ? "bg-gray-100 text-gray-600 border border-gray-200"
+        : status === "in-progress"
+          ? "bg-blue-100 text-blue-600 border border-blue-200"
+          : "bg-red-100 text-red-600 border border-red-200"
 
-  const label = status.charAt(0).toUpperCase() + status.slice(1)
+  const label = status === "in-progress" ? "In Progress" : status.charAt(0).toUpperCase() + status.slice(1)
 
   return <span className={[base, sizes, rounded, styles].join(" ")}>{label}</span>
 }
