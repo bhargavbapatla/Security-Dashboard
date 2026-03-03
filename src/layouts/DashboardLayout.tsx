@@ -2,22 +2,16 @@ import { type FC } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
-
-const SidebarLink: FC<{ to: string; label: string }> = ({ to, label }) => {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        [
-          'flex items-center gap-2 rounded-md px-3 py-2 text-sm',
-          isActive ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent',
-        ].join(' ')
-      }
-    >
-      <span>{label}</span>
-    </NavLink>
-  )
-}
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Radar,
+  CalendarClock,
+  Bell,
+  Settings,
+  LifeBuoy,
+  ChevronRight,
+} from 'lucide-react'
 
 const Header: FC = () => {
   const navigate = useNavigate()
@@ -26,10 +20,10 @@ const Header: FC = () => {
     navigate('/login', { replace: true })
   }
   return (
-    <header className="flex h-14 items-center justify-between border-b px-4">
+    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-6">
       <div className="flex items-center gap-2">
         <span className="h-3 w-3 rounded-full bg-primary" />
-        <span className="text-sm font-semibold tracking-wide">aps</span>
+        <span className="text-sm font-semibold tracking-wide text-foreground">aps</span>
       </div>
       <div className="flex items-center gap-2">
         <ModeToggle />
@@ -41,27 +35,84 @@ const Header: FC = () => {
   )
 }
 
+const navTop = [
+  { to: '/app/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/app/projects',      icon: FolderKanban,    label: 'Projects' },
+  { to: '/app/scans',         icon: Radar,           label: 'Scans' },
+  { to: '/app/schedule',      icon: CalendarClock,   label: 'Schedule' },
+]
+
+const navBottom = [
+  { to: '/app/notifications', icon: Bell,     label: 'Notifications' },
+  { to: '/app/settings',      icon: Settings, label: 'Settings' },
+  { to: '/app/support',       icon: LifeBuoy, label: 'Support' },
+]
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  [
+    'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
+    isActive
+      ? 'bg-[#1a2e2b] text-primary dark:bg-[#1a2e2b]'
+      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+  ].join(' ')
+
 const Sidebar: FC = () => {
   return (
-    <aside className="flex w-60 flex-col gap-1 border-r p-3">
-      <SidebarLink to="/app/dashboard" label="Dashboard" />
-      <SidebarLink to="/app/scans" label="Scans" />
+    <aside className="flex h-full w-60 flex-col border-r border-border bg-card px-3 py-4">
+      {/* Top nav */}
+      <nav className="flex flex-col gap-1">
+        {navTop.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to} className={navLinkClass}>
+            <Icon className="h-4 w-4 shrink-0" />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Divider */}
+      <div className="my-3 h-px bg-border" />
+
+      {/* Bottom nav */}
+      <nav className="flex flex-col gap-1">
+        {navBottom.map(({ to, icon: Icon, label }) => (
+          <NavLink key={to} to={to} className={navLinkClass}>
+            <Icon className="h-4 w-4 shrink-0" />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* User profile pinned to bottom */}
+      <div className="mt-auto">
+        <div className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-accent cursor-pointer transition-colors">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+            A
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="truncate text-xs font-semibold text-foreground">admin@edu.com</span>
+            <span className="truncate text-xs text-muted-foreground">Security Lead</span>
+          </div>
+          <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+        </div>
+      </div>
     </aside>
   )
 }
 
 const DashboardLayout: FC = () => {
   return (
-    <div className="grid min-h-screen grid-cols-[240px_1fr] grid-rows-[56px_1fr]">
-      <div className="col-span-2">
-        <Header />
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header />
+      <div className="flex flex-1">
+        {/* Sidebar — sticky, always full viewport height minus header */}
+        <div className="sticky top-0 h-[calc(100vh-56px)] w-60 shrink-0 self-start">
+          <Sidebar />
+        </div>
+        {/* Main content scrolls independently and matches sidebar height */}
+        <main className="h-[calc(100vh-56px)] flex-1 overflow-y-auto p-4 bg-background">
+          <Outlet />
+        </main>
       </div>
-      <div>
-        <Sidebar />
-      </div>
-      <main className="p-4">
-        <Outlet />
-      </main>
     </div>
   )
 }
