@@ -1,4 +1,5 @@
 import { type FC, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 import { Card } from '../components/ui/card'
@@ -16,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../components/ui/dialog'
+import { Spinner } from '@/components/ui/spinner'
 
 type LoginValues = {
   firstName: string
@@ -68,6 +70,7 @@ const SocialIcon = ({ id }: { id: string }) => {
 const socials = ['apple', 'google', 'meta']
 
 export const Login: FC = () => {
+  const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const initialValues: LoginValues = {
     firstName: '',
@@ -81,6 +84,7 @@ export const Login: FC = () => {
     await new Promise((r) => setTimeout(r, 500))
     console.log(values)
     toast.success('Account created successfully')
+    navigate('/app/dashboard', { replace: true })
   }
 
   // Helper function to assign specific Tailwind classes based on the social button type
@@ -329,7 +333,10 @@ export const Login: FC = () => {
                     disabled={isSubmitting}
                     className="mt-4 w-full rounded-full bg-primary py-6 text-base font-medium text-white hover:bg-primary/90"
                   >
-                    Create account
+                    <span className="inline-flex items-center justify-center gap-2">
+                      {isSubmitting && <Spinner size="sm" className="text-gray-500 mr-2" />}
+                      <span>Create account</span>
+                    </span>
                   </Button>
 
                   <div className="flex justify-between gap-3 pt-4">
